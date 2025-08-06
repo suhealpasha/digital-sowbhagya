@@ -1,0 +1,43 @@
+.holiday-event {
+  font-weight: bold;
+  border: none;
+}
+
+.fc-daygrid-day-number {
+  font-weight: bold;
+  color: #000; /* Optional: make sure it's clearly visible */
+}
+
+.hijri-inline {
+    font-size: 10px;
+    margin-left: 4px;
+    color: #666;
+  }
+  
+  .marriage-gif {
+    width: 16px;
+    height: 16px;
+    display: block;
+    margin: 4px auto 0;
+    position: absolute;
+    bottom: 2px;
+    right: 0%;
+    transform: translateX(-50%);
+  }
+  
+  .hindu-info {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    font-size: 10px;
+    color: #444;
+    font-family: 'Noto Sans Kannada', sans-serif;
+    line-height: 1.1;
+    z-index: 4;
+  }
+  
+  .fc-daygrid-day {
+    position: relative;
+    cursor: pointer;
+  }
+  
