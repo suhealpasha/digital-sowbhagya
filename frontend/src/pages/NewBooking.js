@@ -141,14 +141,14 @@ const BookingForm = () => {
     const discount = parseFloat(form.discount || 0);
     const discountedTotal = subtotal - discount;
     let gstAmount = 0;
-    let totalCost = 0;
-    if (form.gstIncluded) {
-      gstAmount = discountedTotal - discountedTotal / (1 + GST_RATE);
-      totalCost = discountedTotal;
-    } else {
-      gstAmount = discountedTotal * GST_RATE;
-      totalCost = discountedTotal + gstAmount;
-    }
+let totalCost = 0;
+if (form.gstIncluded) {
+  gstAmount = discountedTotal * GST_RATE;
+  totalCost = discountedTotal + gstAmount;
+} else {
+  gstAmount = 0;
+  totalCost = discountedTotal;
+}
     gstAmount = parseFloat(gstAmount.toFixed(2));
     totalCost = parseFloat(totalCost.toFixed(2));
     const balance = parseFloat(

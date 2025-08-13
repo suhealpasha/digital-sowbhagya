@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const calendarRouter = require('./routes/calendar');
+const { dropboxRouter } = require('./routes/dropbox'); 
 
 const app = express();
 const PORT = 5000;
@@ -17,6 +18,7 @@ const expenseRouter = require("./routes/expenses");
 app.use("/api/bookings", bookingRouter);
 app.use("/api/expenses", expenseRouter);
 app.use('/api', calendarRouter);
+app.use("/api", dropboxRouter);
 
 const connection_string = 'mongodb+srv://suhalpasha:M3fSfEnTZT3hzzxc@cluster0.vbwjpin.mongodb.net/'
 // MongoDB Connection
