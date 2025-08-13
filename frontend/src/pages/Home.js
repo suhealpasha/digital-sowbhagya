@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Box,
   Grid,
@@ -9,7 +9,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
-import { bookings, expenses, RELIGION_COLORS } from "../components/data";
+import { RELIGION_COLORS } from "../components/data";
 import {
   PieChart,
   Pie,
@@ -26,13 +26,41 @@ import EventIcon from "@mui/icons-material/Event";
 import TodayIcon from "@mui/icons-material/Today";
 import MoneyIcon from "@mui/icons-material/Money";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import SavingsIcon from '@mui/icons-material/Savings';
+import SavingsIcon from "@mui/icons-material/Savings";
+import { getAllBookings, getAllExpenses } from "../services/api";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AA47BC"];
+const expenseTypes = [
+  "Salaried Paid",
+  "Repair",
+  "Loan Payment",
+  "Purchase",
+  "Borrower Payment",
+  "Other",
+];
 
 const HomeDashboard = () => {
   const [filter, setFilter] = useState("all");
+  const [bookings, setBookings] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const now = new Date();
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [bkRes, expRes] = await Promise.all([getAllBookings(), getAllExpenses()]);
+        setBookings(bkRes?.data?.bookings || []);
+        setExpenses(expRes?.data?.expenses || []);
+      } catch (err) {
+        console.error("Failed to load data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleFilterChange = (event) => {
     setFilter(event.target.value);
@@ -54,66 +82,82 @@ const HomeDashboard = () => {
     });
   };
 
-  const filteredBookings = useMemo(() => filterByDate(bookings), [bookings, filter]);
-  const filteredExpenses = useMemo(() => filterByDate(expenses), [expenses, filter]);
+  const filteredBookings = useMemo(() => {
+    return filterByDate(bookings, filter);
+  }, [bookings, filter]);
+  
+  const filteredExpenses = useMemo(() => {
+    return filterByDate(expenses, filter);
+  }, [expenses, filter]);
 
   // KPIs
   const totalBookings = filteredBookings.length;
-  const totalBookingDays = useMemo(
-    () => filteredBookings.reduce((acc, b) => acc + Number(b.days || 0), 0),
-    [filteredBookings]
-  );
-  const totalExpenses = useMemo(
-    () => filteredExpenses.reduce((acc, e) => acc + Number(e.amount || 0), 0),
-    [filteredExpenses]
-  );
-  const totalRevenue = useMemo(
-    () => filteredBookings.reduce((acc, b) => acc + (b.totalAmount || 0), 0),
-    [filteredBookings]
-  );
+  const totalBookingDays = useMemo(() => {
+    return filteredBookings.reduce((acc, b) => acc + Number(b.days || 0), 0);
+  }, [filteredBookings]);
+  
+  const totalExpenses = useMemo(() => {
+    return filteredExpenses.reduce((acc, e) => acc + Number(e.amount || 0), 0);
+  }, [filteredExpenses]);
+  
+  const totalRevenue = useMemo(() => {
+    return filteredBookings.reduce((acc, b) => acc + Number(b.totalCost || 0), 0);
+  }, [filteredBookings]);
+  
+  const totalProfit = useMemo(() => {
+    return totalRevenue - totalExpenses;
+  }, [totalRevenue, totalExpenses]);
 
-  // Charts
   const categoriesByReligion = useMemo(() => {
     const result = {};
     filteredBookings.forEach(({ religion }) => {
       const key = religion || "Others";
       result[key] = (result[key] || 0) + 1;
     });
-    return Object.entries(result).map(([religion, count]) => ({
-      name: religion,
-      value: count,
-      fill: RELIGION_COLORS[religion] || "#BDBDBD",
+  
+    return Object.entries(result).map(([name, value]) => ({
+      name,
+      value,
+      fill: RELIGION_COLORS[name] || "#BDBDBD",
     }));
   }, [filteredBookings]);
 
   const categoriesByEventType = useMemo(() => {
     const result = {};
     filteredBookings.forEach(({ event_type }) => {
-      result[event_type] = (result[event_type] || 0) + 1;
+      const key = event_type || "Others";
+      result[key] = (result[key] || 0) + 1;
     });
-    return Object.entries(result).map(([event_type, count]) => ({
-      name: event_type,
-      value: count,
+  
+    return Object.entries(result).map(([name, value]) => ({
+      name,
+      value,
     }));
   }, [filteredBookings]);
 
   const expensesByCategory = useMemo(() => {
     const result = {};
-    filteredExpenses.forEach(({ category, amount }) => {
-      result[category] = (result[category] || 0) + Number(amount || 0);
+  
+    // Initialize all categories to 0
+    expenseTypes.forEach((type) => {
+      result[type] = 0;
     });
-    return Object.entries(result).map(([category, amount]) => ({
-      name: category,
-      value: amount,
+  
+    // Aggregate amounts
+    filteredExpenses.forEach(({ category, amount }) => {
+      const key = expenseTypes.includes(category) ? category : "Other";
+      result[key] += Number(amount || 0);
+    });
+  
+    return Object.entries(result).map(([name, value]) => ({
+      name,
+      value,
     }));
   }, [filteredExpenses]);
 
-  const totalProfit = useMemo(() => {
-    return filteredBookings.reduce(
-      (acc, b) => acc + (b.profit || 0),
-      0
-    );
-  }, [filteredBookings]);
+  if (loading) {
+    return <Typography>Loading dashboard...</Typography>;
+  }
 
   return (
     <Box>
@@ -135,36 +179,48 @@ const HomeDashboard = () => {
 
       {/* KPI Cards */}
       <Grid container spacing={2}>
-        {[{
-          title: "Total Bookings",
-          value: totalBookings,
-          icon: <EventIcon color="primary" sx={{ fontSize: 40 }} />,
-          bgcolor: "#e3f2fd"
-        }, {
-          title: "Total Booking Days",
-          value: totalBookingDays,
-          icon: <TodayIcon color="secondary" sx={{ fontSize: 40 }} />,
-          bgcolor: "#fce4ec"
-        }, {
-          title: "Total Expenses",
-          value: `₹${totalExpenses.toLocaleString()}`,
-          icon: <MoneyIcon sx={{ color: "#ff9800", fontSize: 40 }} />,
-          bgcolor: "#fff3e0"
-        }, {
-          title: "Total Revenue",
-          value: `₹${totalRevenue.toLocaleString()}`,
-          icon: <TrendingUpIcon sx={{ color: "#4caf50", fontSize: 40 }} />,
-          bgcolor: "#e8f5e9"
-        },
-        {
-          title: "Total Profit",
-          value: `₹${totalProfit.toLocaleString()}`,
-          icon: <SavingsIcon sx={{ color: "#f5bc42", fontSize: 40 }} />,
-          bgcolor: "#42c5f5",
-        },
-      ].map((kpi, i) => (
+        {[
+          {
+            title: "Total Bookings",
+            value: totalBookings,
+            icon: <EventIcon color="primary" sx={{ fontSize: 40 }} />,
+            bgcolor: "#e3f2fd",
+          },
+          {
+            title: "Total Booking Days",
+            value: totalBookingDays,
+            icon: <TodayIcon color="secondary" sx={{ fontSize: 40 }} />,
+            bgcolor: "#fce4ec",
+          },
+          {
+            title: "Total Expenses",
+            value: `₹${totalExpenses.toLocaleString()}`,
+            icon: <MoneyIcon sx={{ color: "#ff9800", fontSize: 40 }} />,
+            bgcolor: "#fff3e0",
+          },
+          {
+            title: "Total Revenue",
+            value: `₹${totalRevenue.toLocaleString()}`,
+            icon: <TrendingUpIcon sx={{ color: "#4caf50", fontSize: 40 }} />,
+            bgcolor: "#e8f5e9",
+          },
+          {
+            title: "Total Profit",
+            value: `₹${totalProfit.toLocaleString()}`,
+            icon: <SavingsIcon sx={{ color: "#f5bc42", fontSize: 40 }} />,
+            bgcolor: "#42c5f5",
+          },
+        ].map((kpi, i) => (
           <Grid item xs={12} md={3} key={i}>
-            <Paper sx={{ p: 2, bgcolor: kpi.bgcolor, display: "flex", alignItems: "center", gap: 2 }}>
+            <Paper
+              sx={{
+                p: 2,
+                bgcolor: kpi.bgcolor,
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
               {kpi.icon}
               <Box>
                 <Typography variant="subtitle1" color="textSecondary">

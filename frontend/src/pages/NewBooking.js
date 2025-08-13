@@ -99,12 +99,12 @@ const BookingForm = () => {
         startTime: editBooking.timings?.split(" to ")[0] || "",
         endTime: editBooking.timings?.split(" to ")[1] || "",
         services: editBooking.services || {},
-        cost: editBooking.cost || 0,
-        advance: editBooking.advance || 0,
-        otherCharges: editBooking.otherCharges || 0,
-        generatorHours: editBooking.generatorHours || 0,
-        unitUsed: editBooking.unitUsed || 0,
-        discount: editBooking.discount || 0,
+        cost: editBooking.cost || "",
+        advance: editBooking.advance || "",
+        otherCharges: editBooking.otherCharges || "",
+        generatorHours: editBooking.generatorHours || "",
+        unitUsed: editBooking.unitUsed || "",
+        discount: editBooking.discount || "",
         gstIncluded: editBooking.gstIncluded ?? false,
       });
     } else {
@@ -115,18 +115,18 @@ const BookingForm = () => {
         phone: "",
         alternative_phone: "",
         date: "",
-        days: 1,
+        days: "", // Empty to force user to enter
         event_type: "",
         religion: "",
         startTime: "",
         endTime: "",
         services: {},
-        cost: 0,
-        advance: 0,
-        otherCharges: 0,
-        generatorHours: 0,
-        unitUsed: 0,
-        discount: 0,
+        cost: "", // Empty
+        advance: "", // Empty
+        otherCharges: "",
+        generatorHours: "",
+        unitUsed: "",
+        discount: "",
         gstIncluded: false,
       });
     }
@@ -140,12 +140,22 @@ const BookingForm = () => {
     const subtotal = base + other + genCost + unitCost;
     const discount = parseFloat(form.discount || 0);
     const discountedTotal = subtotal - discount;
-    const gstAmount = form.gstIncluded ? discountedTotal * GST_RATE : 0;
-    const totalCost = discountedTotal + gstAmount;
-    const balance = totalCost - parseFloat(form.advance || 0);
-
+    let gstAmount = 0;
+    let totalCost = 0;
+    if (form.gstIncluded) {
+      gstAmount = discountedTotal - discountedTotal / (1 + GST_RATE);
+      totalCost = discountedTotal;
+    } else {
+      gstAmount = discountedTotal * GST_RATE;
+      totalCost = discountedTotal + gstAmount;
+    }
+    gstAmount = parseFloat(gstAmount.toFixed(2));
+    totalCost = parseFloat(totalCost.toFixed(2));
+    const balance = parseFloat(
+      (totalCost - parseFloat(form.advance || 0)).toFixed(2)
+    );
     setCostSummary({
-      baseCost: subtotal,
+      baseCost: parseFloat((subtotal - discount).toFixed(2)),
       gstAmount,
       totalCost,
       balance,
@@ -185,9 +195,8 @@ const BookingForm = () => {
 
     if (isSubmitting) return;
 
-    const requiredFields = ["name", "phone", "date", "event_type"];
-
-    const hasEmpty = requiredFields.some((field) => !form[field]);
+    const requiredFields = ["name", "phone", "date", "event_type", "days", "cost", "advance"];
+    const hasEmpty = requiredFields.some((field) => !form[field] && form[field] !== 0);
     if (hasEmpty) {
       toast.error("Please fill in all required fields.");
       return;
@@ -318,11 +327,12 @@ const BookingForm = () => {
             <TextField
               fullWidth
               type="number"
-              label="Number of Days"
+              label="Number of Days *"
               name="days"
               inputProps={{ min: 1 }}
               value={form.days}
               onChange={handleChange}
+              required
             />
           </Box>
 
@@ -418,20 +428,22 @@ const BookingForm = () => {
           <TextField
             fullWidth
             type="number"
-            label="Base Cost (Manual)"
+            label="Base Cost (Manual) *"
             name="cost"
-            inputProps={{ min: 0 }}
+            inputProps={{ min: 0, step: "any" }}
             value={form.cost}
             onChange={handleChange}
+            required
           />
           <TextField
             fullWidth
             type="number"
-            label="Advance Amount"
+            label="Advance Amount *"
             name="advance"
-            inputProps={{ min: 0 }}
+            inputProps={{ min: 0, step: "any" }}
             value={form.advance}
             onChange={handleChange}
+            required
           />
         </Box>
 
@@ -442,7 +454,7 @@ const BookingForm = () => {
             type="number"
             label="Other Charges"
             name="otherCharges"
-            inputProps={{ min: 0 }}
+            inputProps={{ min: 0, step: "any" }}
             value={form.otherCharges}
             onChange={handleChange}
           />
@@ -451,7 +463,7 @@ const BookingForm = () => {
             type="number"
             label="Discount"
             name="discount"
-            inputProps={{ min: 0 }}
+            inputProps={{ min: 0, step: "any" }}
             value={form.discount}
             onChange={handleChange}
           />
@@ -462,19 +474,19 @@ const BookingForm = () => {
           <TextField
             fullWidth
             type="number"
-            label="Generator Hours"
-            name="generatorHours"
-            inputProps={{ min: 0 }}
-            value={form.generatorHours}
+            label="Electricity Units Used"
+            name="unitUsed"
+            inputProps={{ min: 0, step: "any" }}
+            value={form.unitUsed}
             onChange={handleChange}
           />
           <TextField
             fullWidth
             type="number"
-            label="Electricity Units Used"
-            name="unitUsed"
-            inputProps={{ min: 0 }}
-            value={form.unitUsed}
+            label="Generator Hours"
+            name="generatorHours"
+            inputProps={{ min: 0, step: "any" }}
+            value={form.generatorHours}
             onChange={handleChange}
           />
         </Box>

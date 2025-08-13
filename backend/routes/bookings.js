@@ -6,14 +6,31 @@ const router = express.Router();
 
 router.put("/update-booking/:id", async (req, res) => {
   try {
-    const updatedBooking = await Booking.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    res.json(updatedBooking);
+    const updatedBooking = await Booking.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+
+    if (!updatedBooking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    let updatedBillUrl = null;
+    try {
+      updatedBillUrl = await generateGSTBillPDF(updatedBooking);
+      updatedBooking.gstBillUrl = updatedBillUrl;
+      await updatedBooking.save();
+    } catch (pdfErr) {
+      console.warn("PDF regen error (safe to ignore if link exists):", pdfErr);
+    }
+
+    res.json({
+      message: "Booking updated successfully",
+      booking: updatedBooking,
+      gstBillUrl: updatedBillUrl || updatedBooking.gstBillUrl || null,
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Update failed:", err);
+    res.status(500).json({ error: "Failed to update booking" });
   }
 });
 

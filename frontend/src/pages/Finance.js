@@ -23,35 +23,27 @@ import {
   InputLabel,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import { getAllBookings } from "../services/api"; // import your API call
+import { getAllBookings, addNewExpense, getAllExpenses, deleteExpense } from "../services/api"; // import your API call
+import DeleteIcon from "@mui/icons-material/Delete";
+import { toast } from "react-toastify";
 
-const expenseTypes = ["Salaried Paid", "Repair", "Loan Payment", "Purchase", "Borrower Payment", "Other"];
+const expenseTypes = [
+  "Salaried Paid",
+  "Repair",
+  "Loan Payment",
+  "Purchase",
+  "Borrower Payment",
+  "Other",
+];
 
 const FinancePage = () => {
   // States
-  const [expenses, setExpenses] = useState([
-    {
-      description: "Repaired stage lights",
-      type: "Repair",
-      amount: 3000,
-      date: "2025-07-15",
-    },
-    {
-      description: "Paid EMI for wedding loan",
-      type: "Loan Payment",
-      amount: 10000,
-      date: "2025-07-25",
-    },
-    {
-      description: "Bought sound system",
-      type: "Purchase",
-      amount: 25000,
-      date: "2025-07-10",
-    },
-  ]);
-
+  const [expenses, setExpenses] = useState([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImages, setPreviewImages] = useState([]);
   const [bookings, setBookings] = useState([]); // initially empty
-
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState(null);
   const [newExpense, setNewExpense] = useState({
     description: "",
     type: "",
@@ -66,13 +58,27 @@ const FinancePage = () => {
     const fetchBookings = async () => {
       try {
         const data = await getAllBookings();
-        setBookings(data?.data?.bookings); // set the bookings state with API data
+        setBookings(data?.data?.bookings);
       } catch (error) {
         console.error("Failed to fetch bookings:", error);
       }
     };
 
     fetchBookings();
+  }, []);
+
+  const fetchExpenses = async () => {
+    try {
+      const res = await getAllExpenses();
+      setExpenses(res.data.expenses);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+ 
+    fetchExpenses();
   }, []);
 
   // Search/filter/sort/pagination states for Expenses
@@ -93,14 +99,14 @@ const FinancePage = () => {
   // Sorting helper function
   const sortData = (array = [], orderBy, orderDir) => {
     if (!Array.isArray(array)) return []; // return empty array if not an array
-  
+
     return [...array].sort((a, b) => {
       let aVal = a[orderBy];
       let bVal = b[orderBy];
-  
+
       if (typeof aVal === "string" && !isNaN(Number(aVal))) aVal = Number(aVal);
       if (typeof bVal === "string" && !isNaN(Number(bVal))) bVal = Number(bVal);
-  
+
       if (aVal < bVal) return orderDir === "asc" ? -1 : 1;
       if (aVal > bVal) return orderDir === "asc" ? 1 : -1;
       return 0;
@@ -182,27 +188,67 @@ const FinancePage = () => {
     setBookingSortBy(property);
   };
 
-  // Add new expense
-  const handleAddExpense = () => {
+  const handleAddExpense = async () => {
     const { description, type, amount, date, images } = newExpense;
     if (!description || !type || !amount || !date) {
       alert("Please fill all fields");
       return;
     }
-  
-    setExpenses([...expenses, { description, type, amount, date, images }]);
-  
-    // Reset state
-    setNewExpense({
-      description: "",
-      type: "",
-      amount: "",
-      date: "",
-      images: [],
-    });
-    setDialogOpen(false);
+
+    try {
+      const formData = new FormData();
+      formData.append("description", description);
+      formData.append("type", type);
+      formData.append("amount", amount);
+      formData.append("date", date);
+
+      // Append images if any
+      images.forEach((img) => formData.append("images", img));
+
+      const res = await addNewExpense(formData);
+
+      if (res.status === 201 && res.data.expense) {
+        // Update local expenses list
+        setExpenses((prev) => [...prev, res.data.expense]);
+
+        // Reset form
+        setNewExpense({
+          description: "",
+          type: "",
+          amount: "",
+          date: "",
+          images: [],
+        });
+        setDialogOpen(false);
+      } else {
+        alert("Failed to add expense");
+      }
+    } catch (err) {
+      console.error("Error adding expense:", err);
+      alert("Failed to add expense");
+    }
   };
-console.log(bookings)
+
+  const confirmDelete = async () => {
+    if (!expenseToDelete) return;
+
+    try {
+      await deleteExpense(expenseToDelete?._id);
+      toast.success("Expense deleted successfully");
+      setIsDeleteDialogOpen(false);
+      setExpenseToDelete(null);
+      fetchExpenses();
+    } catch (error) {
+      toast.error("Failed to delete expense");
+      console.error("Delete error:", error);
+    }
+  };
+
+  const handlePreviewExpense = (images) => {
+    setPreviewImages(images || []);
+    setPreviewOpen(true);
+  };
+
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
@@ -368,16 +414,27 @@ console.log(bookings)
                   <TableCell>{e.description}</TableCell>
                   <TableCell>{e.type}</TableCell>
                   <TableCell>₹ {e.amount}</TableCell>
-                  <TableCell>{e.date}</TableCell>
+                  <TableCell>{new Date(e.date).toDateString()}</TableCell>
+                  <TableCell>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => handlePreviewExpense(e.images)}
+                      sx={{ mr: 1 }}
+                    >
+                      Preview
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      onClick={() => {setExpenseToDelete(e); setIsDeleteDialogOpen(true)}}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
-            {filteredSortedExpenses.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} align="center">
-                  No expenses found
-                </TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
 
@@ -481,6 +538,82 @@ console.log(bookings)
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleAddExpense}>
             Add
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Expense Attachments</DialogTitle>
+        <DialogContent dividers>
+          <Box display="flex" flexWrap="wrap" gap={2}>
+          {previewImages?.length > 0 ? (
+  previewImages.map((imgUrl, idx) => {
+    // Ensure Dropbox URLs are correctly formatted
+    let fixedUrl = imgUrl;
+    if (imgUrl.includes("dropbox.com")) {
+      const baseUrl = imgUrl.split("?")[0];
+      const queryParams = new URLSearchParams(imgUrl.split("?")[1]);
+      queryParams.set("raw", "1");
+      fixedUrl = `${baseUrl}?${queryParams.toString()}`;
+    }
+
+    return (
+      <img
+        key={idx}
+        src={fixedUrl}
+        alt={`attachment-${idx}`}
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = "/fallback-image.png";
+        }}
+        style={{
+          width: 120,
+          height: 120,
+          objectFit: "cover",
+          borderRadius: 4,
+          margin: 4,
+          border: "1px solid #ddd",
+        }}
+      />
+    );
+  })
+) : (
+  <Typography>No attachments found</Typography>
+)}
+
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPreviewOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent dividers>
+          <Typography>
+            Are you sure you want to delete the expense{" "}
+            <strong>{expenseToDelete?.name}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setIsDeleteDialogOpen(false)}
+            color="primary"
+            variant="outlined"
+          >
+            Cancel
+          </Button>
+          <Button onClick={confirmDelete} color="error" variant="contained">
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

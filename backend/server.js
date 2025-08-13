@@ -13,8 +13,9 @@ app.use(express.json());
 // Routes
 app.use("/gst-bills", express.static("public/gst-bills"));
 const bookingRouter = require("./routes/bookings");
+const expenseRouter = require("./routes/expenses");
 app.use("/api/bookings", bookingRouter);
-
+app.use("/api/expenses", expenseRouter);
 app.use('/api', calendarRouter);
 
 const connection_string = 'mongodb+srv://suhalpasha:M3fSfEnTZT3hzzxc@cluster0.vbwjpin.mongodb.net/'

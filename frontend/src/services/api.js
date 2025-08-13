@@ -11,7 +11,7 @@ export const createBooking = (data) =>
 export const getBookings = (params) =>
   axios.get(`${BASE_URL}/api/bookings/bookings-list`, { params });
 
-  export const getAllBookings = (params) =>
+export const getAllBookings = (params) =>
   axios.get(`${BASE_URL}/api/bookings/bookings-all-list`);
 
 export const deleteBooking = (id) =>
@@ -28,3 +28,13 @@ export const getIndianHolidays = () =>
 
 export const getHotMarriageDates = () =>
   axios.get(`${BASE_URL}/api/marriage-dates`);
+
+export const getAllExpenses = () =>
+  axios.get(`${BASE_URL}/api/expenses/expenses-all-list`);
+  
+export const addNewExpense = (formData) =>
+  axios.post(`${BASE_URL}/api/expenses/add-new-expense`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+export const deleteExpense = (id) =>
+  axios.delete(`${BASE_URL}/api/expenses/delete-expense/${id}`);
