@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const Booking = require("../models/Booking"); // Your mongoose model file
-const generateGSTBillPDF = require("../utils/gstBillGenerator"); // Your custom GST PDF generator module
+const Booking = require("../models/Booking");
+const generateGSTBillPDF = require("../utils/gstBillGenerator");
 const router = express.Router();
 
 router.put("/update-booking/:id", async (req, res) => {
@@ -37,16 +37,13 @@ router.put("/update-booking/:id", async (req, res) => {
 router.post("/add-new-booking", async (req, res) => {
   try {
     const bookingData = req.body;
-
-    // Save booking to MongoDB initially
     const newBooking = new Booking(bookingData);
     const savedBooking = await newBooking.save();
 
     let billUrl = null;
 
     try {
-      // Always generate a bill PDF (GST or regular)
-      billUrl = await generateGSTBillPDF(savedBooking); // Replace this if needed
+      billUrl = await generateGSTBillPDF(savedBooking); 
       savedBooking.gstBillUrl = billUrl;
       await savedBooking.save();
     } catch (pdfError) {
@@ -71,8 +68,6 @@ router.get('/bookings-list', async (req, res) => {
     const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
 
     const search = req.query.search?.trim();
-
-    // Create a filter
     const filter = {};
 
     if (search) {
