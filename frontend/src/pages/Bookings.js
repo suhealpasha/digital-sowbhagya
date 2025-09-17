@@ -31,10 +31,17 @@ const BookingListContainer = () => {
     setEditBooking(booking);
     navigate("/new-booking");
   };
-
   const handleDownloadBill = (url) => {
-    console.log(url)
-    window.open(url, "_blank", "noopener,noreferrer");
+    const directDownloadUrl = url.replace("dl=0", "dl=1");
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/T/, '_').replace(/:/g, '-').split('.')[0];
+    const filename = `Bill_invoice_${timestamp}.pdf`;
+    const link = document.createElement("a");
+    link.href = directDownloadUrl;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
