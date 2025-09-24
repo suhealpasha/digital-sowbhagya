@@ -2,6 +2,7 @@
 
 const express = require('express');
 const fetch = require('isomorphic-fetch');
+const verifyToken = require("./token-verify");
 const router = express.Router();
 
 const {
@@ -17,7 +18,7 @@ router.get('/dropbox/auth', (req, res) => {
   res.redirect(authUrl);
 });
 
-router.get('/dropbox/callback', async (req, res) => {
+router.get('/dropbox/callback', verifyToken, async (req, res) => {
   const { code } = req.query;
 
   try {
@@ -48,7 +49,7 @@ router.get('/dropbox/callback', async (req, res) => {
   }
 });
 
-router.get('/dropbox/token', async (req, res) => {
+router.get('/dropbox/token', verifyToken, async (req, res) => {
   if (!savedRefreshToken) {
     return res.status(400).send('Refresh token not found.');
   }

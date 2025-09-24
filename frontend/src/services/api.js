@@ -1,43 +1,70 @@
+// api.js
 import axios from "axios";
 
 const BASE_URL = "http://localhost:5000";
 
-export const submitLogin = (data) =>
-  axios.post(`${BASE_URL}/api/auth/login`, data);
+// Get token from localStorage
+const getAuthToken = () => localStorage.getItem('authToken');
 
+// Create Axios instance
+const api = axios.create({
+  baseURL: BASE_URL,
+});
+
+// Request interceptor to add Authorization header
+api.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token && !config.url.includes("/auth/login")) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
+
+// ========== API FUNCTIONS ==========
+
+// Auth
+export const submitLogin = (data) =>
+  api.post('/api/auth/login', data);
+
+// Bookings
 export const updateBooking = (id, data) =>
-  axios.put(`${BASE_URL}/api/bookings/update-booking/${id}`, data);
+  api.put(`/api/bookings/update-booking/${id}`, data);
 
 export const createBooking = (data) =>
-  axios.post(`${BASE_URL}/api/bookings/add-new-booking`, data);
+  api.post('/api/bookings/add-new-booking', data);
 
 export const getBookings = (params) =>
-  axios.get(`${BASE_URL}/api/bookings/bookings-list`, { params });
+  api.get('/api/bookings/bookings-list', { params });
 
-export const getAllBookings = (params) =>
-  axios.get(`${BASE_URL}/api/bookings/bookings-all-list`);
+export const getAllBookings = () =>
+  api.get('/api/bookings/bookings-all-list');
 
 export const deleteBooking = (id) =>
-  axios.delete(`${BASE_URL}/api/bookings/delete/${id}`);
+  api.delete(`/api/bookings/delete/${id}`);
 
+// Calendars & Holidays
 export const getHijriCalendar = () =>
-  axios.get(`${BASE_URL}/api/hijri-calendar`);
+  api.get('/api/hijri-calendar');
 
 export const getHinduCalendar = () =>
-  axios.get(`${BASE_URL}/api/hindu-calendar`);
+  api.get('/api/hindu-calendar');
 
 export const getIndianHolidays = () =>
-  axios.get(`${BASE_URL}/api/indian-holidays`);
+  api.get('/api/indian-holidays');
 
 export const getHotMarriageDates = () =>
-  axios.get(`${BASE_URL}/api/marriage-dates`);
+  api.get('/api/marriage-dates');
 
+// Expenses
 export const getAllExpenses = () =>
-  axios.get(`${BASE_URL}/api/expenses/expenses-all-list`);
+  api.get('/api/expenses/expenses-all-list');
 
 export const addNewExpense = (formData) =>
-  axios.post(`${BASE_URL}/api/expenses/add-new-expense`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+  api.post('/api/expenses/add-new-expense', formData, {
+    headers: { "Content-Type": "multipart/form-data" }
   });
+
 export const deleteExpense = (id) =>
-  axios.delete(`${BASE_URL}/api/expenses/delete-expense/${id}`);
+  api.delete(`/api/expenses/delete-expense/${id}`);

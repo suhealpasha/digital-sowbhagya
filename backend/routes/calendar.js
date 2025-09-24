@@ -1,6 +1,7 @@
 const express = require("express");
 const axios = require("axios");
 const router = express.Router();
+const verifyToken = require("./token-verify");
 require("dotenv").config();
 
 const { MhahPanchang } = require("mhah-panchang");
@@ -85,7 +86,7 @@ router.get("/panchang", (req, res) => {
   });
 });
 
-router.get("/marriage-dates", async (req, res) => {
+router.get("/marriage-dates", verifyToken, async (req, res) => {
   const today = new Date();
   const oneYearLater = new Date();
   oneYearLater.setFullYear(today.getFullYear() + 1);
@@ -145,7 +146,7 @@ function translateToKannada(panchang) {
   };
 }
 
-router.get("/hindu-calendar", async (req, res) => {
+router.get("/hindu-calendar", verifyToken, async (req, res) => {
   const today = new Date();
   const oneYearLater = new Date(today);
   oneYearLater.setFullYear(today.getFullYear() + 1);
@@ -155,17 +156,24 @@ router.get("/hindu-calendar", async (req, res) => {
 
   while (currentDate <= oneYearLater) {
     try {
-      const calendar = panchang.calendar(new Date(currentDate), BANGALORE_LAT, BANGALORE_LNG);
+      const calendar = panchang.calendar(
+        new Date(currentDate),
+        BANGALORE_LAT,
+        BANGALORE_LNG
+      );
       const kannadaCalendar = translateToKannada(calendar);
 
       yearlyCalendar.push({
         date: currentDate.toISOString().split("T")[0],
-        kannada: kannadaCalendar
+        kannada: kannadaCalendar,
       });
 
       currentDate.setDate(currentDate.getDate() + 1);
     } catch (err) {
-      console.error(`Error on ${currentDate.toISOString().split("T")[0]}:`, err.message);
+      console.error(
+        `Error on ${currentDate.toISOString().split("T")[0]}:`,
+        err.message
+      );
       currentDate.setDate(currentDate.getDate() + 1);
     }
   }
@@ -175,112 +183,119 @@ router.get("/hindu-calendar", async (req, res) => {
     from: today.toISOString().split("T")[0],
     to: oneYearLater.toISOString().split("T")[0],
     totalDays: yearlyCalendar.length,
-    calendar: yearlyCalendar
+    calendar: yearlyCalendar,
   });
 });
 
+router.get("/hijri-calendar", verifyToken, async (req, res) => {
+  const latitude = 12.9716;
+  const longitude = 77.5946;
+  const method = 5;
 
-router.get('/hijri-calendar', async (req, res) => {
-    const latitude = 12.9716;
-    const longitude = 77.5946;
-    const method = 5;
-  
-    const today = new Date();
-    const hijriCalendar = [];
-  
-    try {
-      for (let i = 0; i < 12; i++) {
-        const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
-        const month = date.getMonth() + 1;
-        const year = date.getFullYear();
-  
-        const response = await axios.get(`https://api.aladhan.com/v1/gToHCalendar/${month}/${year}`, {
+  const today = new Date();
+  const hijriCalendar = [];
+
+  try {
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+
+      const response = await axios.get(
+        `https://api.aladhan.com/v1/gToHCalendar/${month}/${year}`,
+        {
           params: {
             latitude,
             longitude,
-            method
-          }
-        });
-  
-        const monthData = response.data?.data?.map(entry => {
-          const weekdayEn = entry.hijri.weekday.en;
-          const weekdayAr = entry.hijri.weekday.ar;
-          const weekdayUr = arabicToUrduWeekdays[weekdayAr] || urduWeekdays[weekdayEn] || weekdayAr;
-  
-          const monthEn = entry.hijri.month.en;
-          const monthUr = urduMonths[monthEn] || entry.hijri.month.ar;
-  
-          return {
-            gregorian: entry.gregorian.date,
-            hijri: entry.hijri.date,
-            weekday_en: weekdayEn,
-            weekday_ar: weekdayAr,
-            weekday_ur: weekdayUr,
-            month_en: monthEn,
-            month_ur: monthUr,
-            year: entry.hijri.year,
-            hijri_day: entry.hijri.day,
-            holidays: entry.hijri.holidays
-          };
-        });
-  
-        hijriCalendar.push(...monthData);
-      }
-  
-      res.json({
-        city: "Bangalore",
-        from: today.toISOString().split('T')[0],
-        to: new Date(today.getFullYear(), today.getMonth() + 12, 0).toISOString().split('T')[0],
-        totalDays: hijriCalendar.length,
-        hijriCalendar
-      });
-  
-    } catch (error) {
-      console.error("Error fetching Hijri calendar:", error.message);
-      res.status(500).json({ error: "Failed to fetch Hijri calendar" });
-    }
-  });
-  
-  router.get("/indian-holidays", async (req, res) => {
-    const apiKey = process.env.GOOGLE_CALENDAR_API_KEY;
-    const calendarId = "en.indian%23holiday@group.v.calendar.google.com";
-    const today = new Date();
-    const nextYear = new Date(today);
-    nextYear.setFullYear(today.getFullYear() + 1);
-  
-    const timeMin = today.toISOString();
-    const timeMax = nextYear.toISOString();
-  
-    const url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`;
-  
-    try {
-      const response = await axios.get(url, {
-        params: {
-          key: apiKey,
-          timeMin,
-          timeMax,
-          singleEvents: true,
-          orderBy: "startTime"
+            method,
+          },
         }
+      );
+
+      const monthData = response.data?.data?.map((entry) => {
+        const weekdayEn = entry.hijri.weekday.en;
+        const weekdayAr = entry.hijri.weekday.ar;
+        const weekdayUr =
+          arabicToUrduWeekdays[weekdayAr] ||
+          urduWeekdays[weekdayEn] ||
+          weekdayAr;
+
+        const monthEn = entry.hijri.month.en;
+        const monthUr = urduMonths[monthEn] || entry.hijri.month.ar;
+
+        return {
+          gregorian: entry.gregorian.date,
+          hijri: entry.hijri.date,
+          weekday_en: weekdayEn,
+          weekday_ar: weekdayAr,
+          weekday_ur: weekdayUr,
+          month_en: monthEn,
+          month_ur: monthUr,
+          year: entry.hijri.year,
+          hijri_day: entry.hijri.day,
+          holidays: entry.hijri.holidays,
+        };
       });
-  
-      const holidays = response.data.items.map(event => ({
-        date: event.start.date,
-        name: event.summary
-      }));
-  
-      res.json({
-        country: "India",
-        from: timeMin.split("T")[0],
-        to: timeMax.split("T")[0],
-        total: holidays.length,
-        holidays
-      });
-    } catch (err) {
-      console.error("Google Calendar API error:", err.message);
-      res.status(500).json({ error: "Failed to fetch holidays from Google Calendar" });
+
+      hijriCalendar.push(...monthData);
     }
-  });
-  
+
+    res.json({
+      city: "Bangalore",
+      from: today.toISOString().split("T")[0],
+      to: new Date(today.getFullYear(), today.getMonth() + 12, 0)
+        .toISOString()
+        .split("T")[0],
+      totalDays: hijriCalendar.length,
+      hijriCalendar,
+    });
+  } catch (error) {
+    console.error("Error fetching Hijri calendar:", error.message);
+    res.status(500).json({ error: "Failed to fetch Hijri calendar" });
+  }
+});
+
+router.get("/indian-holidays", verifyToken, async (req, res) => {
+  const apiKey = process.env.GOOGLE_CALENDAR_API_KEY;
+  const calendarId = "en.indian%23holiday@group.v.calendar.google.com";
+  const today = new Date();
+  const nextYear = new Date(today);
+  nextYear.setFullYear(today.getFullYear() + 1);
+
+  const timeMin = today.toISOString();
+  const timeMax = nextYear.toISOString();
+
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`;
+
+  try {
+    const response = await axios.get(url, {
+      params: {
+        key: apiKey,
+        timeMin,
+        timeMax,
+        singleEvents: true,
+        orderBy: "startTime",
+      },
+    });
+
+    const holidays = response.data.items.map((event) => ({
+      date: event.start.date,
+      name: event.summary,
+    }));
+
+    res.json({
+      country: "India",
+      from: timeMin.split("T")[0],
+      to: timeMax.split("T")[0],
+      total: holidays.length,
+      holidays,
+    });
+  } catch (err) {
+    console.error("Google Calendar API error:", err.message);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch holidays from Google Calendar" });
+  }
+});
 
 module.exports = router;

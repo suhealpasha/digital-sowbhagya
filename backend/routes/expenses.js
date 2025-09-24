@@ -5,6 +5,7 @@ const { Dropbox } = require("dropbox");
 const fetch = require("node-fetch");
 const router = express.Router();
 const multer = require("multer");
+const verifyToken = require("./token-verify");
 const upload = multer();
 const { uploadImagesToDropbox } = require("../utils/imageUploader"); // y
 const dbx = new Dropbox({
@@ -12,23 +13,26 @@ const dbx = new Dropbox({
   fetch,
 });
 
-
 // Add new expense
-router.post("/add-new-expense", upload.array("images"), async (req, res) => {
+router.post(
+  "/add-new-expense",
+  upload.array("images"),
+  verifyToken,
+  async (req, res) => {
     try {
       const { description, type, amount, date } = req.body;
       const files = req.files; // multer stores files here
-  
+
       if (!description || !type || !amount || !date) {
         return res.status(400).json({ message: "All fields are required" });
       }
-  
+
       let imageUrls = [];
       if (files?.length) {
         // upload to Dropbox
         imageUrls = await uploadImagesToDropbox(files);
       }
-  
+
       const expense = new Expense({
         description,
         type,
@@ -36,17 +40,18 @@ router.post("/add-new-expense", upload.array("images"), async (req, res) => {
         date,
         images: imageUrls,
       });
-  
+
       const savedExpense = await expense.save();
       res.status(201).json({ expense: savedExpense });
     } catch (err) {
       console.error("Error saving expense:", err);
       res.status(500).json({ message: "Failed to save expense" });
     }
-  });
+  }
+);
 
 // Get all expenses
-router.get("/expenses-all-list", async (req, res) => {
+router.get("/expenses-all-list", verifyToken, async (req, res) => {
   try {
     const expenses = await Expense.find().sort({ date: -1 });
     res.json({ success: true, expenses });
@@ -56,7 +61,7 @@ router.get("/expenses-all-list", async (req, res) => {
 });
 
 // Delete expense
-router.delete("/delete-expense/:id", async (req, res) => {
+router.delete("/delete-expense/:id", verifyToken, async (req, res) => {
   try {
     const expense = await Expense.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: "Expense deleted", expense });

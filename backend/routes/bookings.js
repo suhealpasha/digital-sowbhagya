@@ -2,9 +2,11 @@ const express = require("express");
 const mongoose = require("mongoose");
 const Booking = require("../models/Booking");
 const generateGSTBillPDF = require("../utils/gstBillGenerator");
+const verifyToken = require("./token-verify");
+
 const router = express.Router();
 
-router.put("/update-booking/:id", async (req, res) => {
+router.put("/update-booking/:id", verifyToken, async (req, res) => {
   try {
     const updatedBooking = await Booking.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -34,7 +36,7 @@ router.put("/update-booking/:id", async (req, res) => {
   }
 });
 
-router.post("/add-new-booking", async (req, res) => {
+router.post("/add-new-booking", verifyToken, async (req, res) => {
   try {
     const bookingData = req.body;
     const newBooking = new Booking(bookingData);
@@ -60,7 +62,7 @@ router.post("/add-new-booking", async (req, res) => {
   }
 });
 
-router.get('/bookings-list', async (req, res) => {
+router.get('/bookings-list', verifyToken, async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page)) || 1;
     const limit = Math.min(Math.max(1, parseInt(req.query.limit)), 100) || 20;
@@ -94,7 +96,7 @@ router.get('/bookings-list', async (req, res) => {
   }
 });
 
-router.get("/bookings-all-list", async (req, res) => {
+router.get("/bookings-all-list", verifyToken, async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page)) || 1;
     const limit = Math.min(Math.max(1, parseInt(req.query.limit)), 100) || 20;
@@ -136,7 +138,7 @@ router.get("/bookings-all-list", async (req, res) => {
   }
 });
 
-router.delete('/delete/:id', async (req, res) => {
+router.delete('/delete/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     await Booking.findByIdAndDelete(id);
