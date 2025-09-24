@@ -16,6 +16,7 @@ import { styled, alpha } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
+// Styled components
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
   borderRadius: theme.shape.borderRadius,
@@ -49,49 +50,57 @@ const TopBar = () => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = React.useState(null);
 
+  // Get user from localStorage
+  const user = JSON.parse(localStorage.getItem("userInfo"));
+
+  // Compute initials (F from firstName, L from last char of lastName)
+  const initials = user
+    ? `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase()
+    : "U";
+
   const handleAvatarClick = (event) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
   const handleLogout = () => {
-    // Your logout logic
-    alert("Logged out");
-    handleClose();
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userInfo");
+    window.location.href = "/login";
   };
 
   return (
     <AppBar position="fixed">
-    <Toolbar sx={{ justifyContent: "space-between" }}>
-  <Typography
-    variant="h6"
-    noWrap
-    component="div"
-    sx={{ display: { xs: "none", sm: "block" } }}
-  >
-    Event Booking
-  </Typography>
+      <Toolbar sx={{ justifyContent: "space-between" }}>
+        <Typography
+          variant="h6"
+          noWrap
+          component="div"
+          sx={{ display: { xs: "none", sm: "block" } }}
+        >
+          Event Booking
+        </Typography>
 
-  <Search sx={{marginLeft: "20px"}}>
-    <SearchIconWrapper>
-      <SearchIcon />
-    </SearchIconWrapper>
-    <StyledInputBase placeholder="Search…" />
-  </Search>
+        <Search sx={{ marginLeft: "20px" }}>
+          <SearchIconWrapper>
+            <SearchIcon />
+          </SearchIconWrapper>
+          <StyledInputBase placeholder="Search…" />
+        </Search>
 
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
-    <CalendarMonthIcon sx={{ color: "white", fontSize: 28 }} onClick={() => navigate("/list-calendar")}/>
-    <IconButton onClick={handleAvatarClick} size="small">
-      <Avatar alt="User" src="/user.jpg" sx={{ width: 28, height: 28 }} />
-    </IconButton>
-  </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
+          <CalendarMonthIcon
+            sx={{ color: "white", fontSize: 28 }}
+            onClick={() => navigate("/list-calendar")}
+          />
+          <IconButton onClick={handleAvatarClick} size="small">
+            <Avatar sx={{ width: 32, height: 32, bgcolor: "white", color: "primary.main", fontSize: 14 }}>
+              {initials}
+            </Avatar>
+          </IconButton>
+        </Box>
 
-  <Menu
-    anchorEl={anchorEl}
-    open={Boolean(anchorEl)}
-    onClose={handleClose}
-  >
-    <MenuItem onClick={handleLogout}>Logout</MenuItem>
-  </Menu>
-</Toolbar>
-
+        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+          <MenuItem onClick={handleLogout}>Logout</MenuItem>
+        </Menu>
+      </Toolbar>
     </AppBar>
   );
 };

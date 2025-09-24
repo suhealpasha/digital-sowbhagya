@@ -2,8 +2,11 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:5000";
 
+export const submitLogin = (data) =>
+  axios.post(`${BASE_URL}/api/auth/login`, data);
+
 export const updateBooking = (id, data) =>
-  axios.put(`${BASE_URL}/api/bookings/update-booking/${id}`, data); // Adjust base URL accordingly
+  axios.put(`${BASE_URL}/api/bookings/update-booking/${id}`, data);
 
 export const createBooking = (data) =>
   axios.post(`${BASE_URL}/api/bookings/add-new-booking`, data);
@@ -31,7 +34,7 @@ export const getHotMarriageDates = () =>
 
 export const getAllExpenses = () =>
   axios.get(`${BASE_URL}/api/expenses/expenses-all-list`);
-  
+
 export const addNewExpense = (formData) =>
   axios.post(`${BASE_URL}/api/expenses/add-new-expense`, formData, {
     headers: { "Content-Type": "multipart/form-data" },

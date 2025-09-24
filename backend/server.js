@@ -12,6 +12,8 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+const authRouter = require("./routes/auth");
+app.use("/api/auth", authRouter);
 app.use("/gst-bills", express.static("public/gst-bills"));
 const bookingRouter = require("./routes/bookings");
 const expenseRouter = require("./routes/expenses");
