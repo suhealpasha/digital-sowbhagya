@@ -17,14 +17,14 @@ app.use(express.json());
 
 // Routes
 const authRouter = require("./routes/auth");
-// app.use("/api/auth", authRouter);
-// app.use("/gst-bills", express.static("public/gst-bills"));
-// const bookingRouter = require("./routes/bookings");
-// const expenseRouter = require("./routes/expenses");
-// app.use("/api/bookings", bookingRouter);
-// app.use("/api/expenses", expenseRouter);
-// app.use('/api', calendarRouter);
-// app.use("/api", dropboxRouter);
+app.use("/api/auth", authRouter);
+app.use("/gst-bills", express.static("public/gst-bills"));
+const bookingRouter = require("./routes/bookings");
+const expenseRouter = require("./routes/expenses");
+app.use("/api/bookings", bookingRouter);
+app.use("/api/expenses", expenseRouter);
+app.use('/api', calendarRouter);
+app.use("/api", dropboxRouter);
 
 // Use environment variable for MongoDB
 mongoose.connect(process.env.MONGO_URI, {
