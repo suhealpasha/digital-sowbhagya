@@ -6,7 +6,7 @@
       "start": "cd backend && npm ci && node server.js"
     },
     "engines": {
-      "node": ">=16"
+      "node": "14.x"
     }
   }
   
