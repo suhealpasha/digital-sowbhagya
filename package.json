@@ -2,8 +2,8 @@
     "name": "digital-sowbhagya-app",
     "version": "1.0.0",
     "scripts": {
-      "build": "cd frontend && npm i && npm run build",
-      "start": "cd backend && npm i && node server.js"
+      "build": "cd client && npm i && npm run build",
+      "start": "cd server && npm i && node server.js"
     },
     "engines": {
       "node": "20.x"
