@@ -17,14 +17,14 @@ app.use(express.json());
 
 // Routes
 const authRouter = require("./routes/auth");
-app.use("/api/auth", authRouter);
-app.use("/gst-bills", express.static("public/gst-bills"));
-const bookingRouter = require("./routes/bookings");
-const expenseRouter = require("./routes/expenses");
-app.use("/api/bookings", bookingRouter);
-app.use("/api/expenses", expenseRouter);
-app.use('/api', calendarRouter);
-app.use("/api", dropboxRouter);
+// app.use("/api/auth", authRouter);
+// app.use("/gst-bills", express.static("public/gst-bills"));
+// const bookingRouter = require("./routes/bookings");
+// const expenseRouter = require("./routes/expenses");
+// app.use("/api/bookings", bookingRouter);
+// app.use("/api/expenses", expenseRouter);
+// app.use('/api', calendarRouter);
+// app.use("/api", dropboxRouter);
 
 // Use environment variable for MongoDB
 mongoose.connect(process.env.MONGO_URI, {
@@ -37,11 +37,18 @@ mongoose.connect(process.env.MONGO_URI, {
 });
 
 // Serve React build in production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, '../client/build')));
+if (process.env.NODE_ENV === 'production') {
+  const buildPath = path.join(__dirname, '../client/build');
+  app.use(express.static(buildPath));
 
-  app.get('/*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client/build/index.html'));
+  // Catch-all handler AFTER static middleware
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(buildPath, 'index.html'), function (err) {
+      if (err) {
+        console.error('Error sending index.html:', err);
+        res.status(500).send(err);
+      }
+    });
   });
 }
 
