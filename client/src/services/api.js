@@ -1,7 +1,7 @@
 // api.js
 import axios from "axios";
 
-process.env.NODE_ENV === "production"
+const BASE_URL = process.env.NODE_ENV === "production"
 ? "https://digital-sowbhagya.onrender.com/" // Relative path — works when frontend and backend are on same domain
 : "http://localhost:5000"; 
 
