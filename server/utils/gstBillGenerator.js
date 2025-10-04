@@ -103,14 +103,14 @@ async function generateGSTBillPDF(booking) {
 
       const pageWidth = doc.page.width;
       const margin = doc.page.margins.left;
-
-      const invoiceNo = Math.floor(10000 + Math.random() * 90000);
       const today = new Date().toLocaleDateString();
+      
+      const invoiceNo = Math.floor(100 + Math.random() * 900);
+
 
       doc.font("Inter-Regular").fontSize(10);
       const invoiceY = doc.y;
-      doc.text(`Invoice No: ${invoiceNo}`, margin, invoiceY);
-
+      doc.text(`Invoice No: SCH-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${invoiceNo}`, margin, invoiceY);
       const dateText = `Date: ${today}`;
       const dateTextWidth = doc.widthOfString(dateText);
       doc.text(dateText, pageWidth - margin - dateTextWidth, invoiceY);
@@ -185,7 +185,7 @@ async function generateGSTBillPDF(booking) {
 
       doc.moveDown(2);
       const sigY = doc.y;
-      const leftSig = "Vendor Signature: ____________________";
+      const leftSig = "Prop Signature: ____________________";
       const rightSig = "Customer Signature: ____________________";
 
       doc.font("Inter-Regular").fontSize(10).text(leftSig, margin, sigY);
@@ -200,34 +200,33 @@ async function generateGSTBillPDF(booking) {
         .text("Thank you for booking with us!", { align: "center" });
 
       doc.moveDown(1);
-      if (unitUsed === 0) {
-        doc.moveDown(1);
-        doc.font("Inter-Bold").fontSize(8).text("Note:", { underline: true });
-        doc.moveDown(1);
-        doc.font("InterDisplay-BoldItalic").fontSize(8);
-
-        const dashX = margin;
-        const textX = dashX + 10;
-        const dashYOffset = 3;
-
-        let y = doc.y + dashYOffset;
-        doc.text(
-          "1. KEB amount based on number of units (₹20 per unit) and Generator cost per hour (₹700) extra charges.",
-          textX,
-          doc.y - dashYOffset,
-          { width: pageWidth - margin * 2 - 20, align: "left" }
-        );
-        doc.moveDown(0.2);
-        y = doc.y + dashYOffset;
-        doc.text(
-          "2. Once booking is made, advance can't be refunded.",
-          textX,
-          doc.y - dashYOffset,
-          { width: pageWidth - margin * 2 - 20, align: "left" }
-        );
-
-        doc.moveDown(1);
-      }
+      doc.moveDown(1);
+      doc.font("Inter-Bold").fontSize(8).text("Note:", { underline: true });
+      doc.moveDown(1);
+      doc.font("InterDisplay-BoldItalic").fontSize(8);
+      
+      const dashX = margin;
+      const textX = dashX + 10;
+      const dashYOffset = 3;
+      
+      let y = doc.y + dashYOffset;
+      doc.text(
+        "1. KEB charges are based on actual unit usage (₹20/unit). Generator usage is charged separately at ₹700 per hour.",
+        textX,
+        doc.y - dashYOffset,
+        { width: pageWidth - margin * 2 - 20, align: "left" }
+      );
+      doc.moveDown(0.2);
+      y = doc.y + dashYOffset;
+      doc.text(
+        "2. Once booking is confirmed, the advance amount is non-refundable.",
+        textX,
+        doc.y - dashYOffset,
+        { width: pageWidth - margin * 2 - 20, align: "left" }
+      );
+      
+      doc.moveDown(1);
+      
 
       doc.end();
     } catch (error) {

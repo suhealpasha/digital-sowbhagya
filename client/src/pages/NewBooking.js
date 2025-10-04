@@ -434,6 +434,7 @@ if (form.gstIncluded) {
             value={form.cost}
             onChange={handleChange}
             required
+            disabled={editBooking}
           />
           <TextField
             fullWidth
@@ -443,6 +444,7 @@ if (form.gstIncluded) {
             inputProps={{ min: 0, step: "any" }}
             value={form.advance}
             onChange={handleChange}
+            disabled={editBooking}
             required
           />
         </Box>

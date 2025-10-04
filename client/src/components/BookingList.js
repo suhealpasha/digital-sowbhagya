@@ -225,9 +225,7 @@ const BookingList = ({ onEdit, onDownloadBill }) => {
                     </TableCell>
                     <TableCell>
                       ₹
-                      {(booking.balance !== undefined
-                        ? booking.balance
-                        : (booking.totalCost || 0) - (booking.advance || 0)
+                      {(booking.balance
                       ).toFixed(2)}
                     </TableCell>
 
