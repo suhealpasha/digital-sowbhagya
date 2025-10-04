@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { useTheme, useMediaQuery } from "@mui/material";
 import {
   Box,
   Grid,
@@ -45,12 +46,16 @@ const HomeDashboard = () => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const now = new Date();
-
+  const theme = useTheme();
+const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [bkRes, expRes] = await Promise.all([getAllBookings(), getAllExpenses()]);
+        const [bkRes, expRes] = await Promise.all([
+          getAllBookings(),
+          getAllExpenses(),
+        ]);
         setBookings(bkRes?.data?.bookings || []);
         setExpenses(expRes?.data?.expenses || []);
       } catch (err) {
@@ -85,7 +90,7 @@ const HomeDashboard = () => {
   const filteredBookings = useMemo(() => {
     return filterByDate(bookings, filter);
   }, [bookings, filter]);
-  
+
   const filteredExpenses = useMemo(() => {
     return filterByDate(expenses, filter);
   }, [expenses, filter]);
@@ -95,15 +100,18 @@ const HomeDashboard = () => {
   const totalBookingDays = useMemo(() => {
     return filteredBookings.reduce((acc, b) => acc + Number(b.days || 0), 0);
   }, [filteredBookings]);
-  
+
   const totalExpenses = useMemo(() => {
     return filteredExpenses.reduce((acc, e) => acc + Number(e.amount || 0), 0);
   }, [filteredExpenses]);
-  
+
   const totalRevenue = useMemo(() => {
-    return filteredBookings.reduce((acc, b) => acc + Number(b.totalCost || 0), 0);
+    return filteredBookings.reduce(
+      (acc, b) => acc + Number(b.totalCost || 0),
+      0
+    );
   }, [filteredBookings]);
-  
+
   const totalProfit = useMemo(() => {
     return totalRevenue - totalExpenses;
   }, [totalRevenue, totalExpenses]);
@@ -114,7 +122,7 @@ const HomeDashboard = () => {
       const key = religion || "Others";
       result[key] = (result[key] || 0) + 1;
     });
-  
+
     return Object.entries(result).map(([name, value]) => ({
       name,
       value,
@@ -128,7 +136,7 @@ const HomeDashboard = () => {
       const key = event_type || "Others";
       result[key] = (result[key] || 0) + 1;
     });
-  
+
     return Object.entries(result).map(([name, value]) => ({
       name,
       value,
@@ -137,18 +145,18 @@ const HomeDashboard = () => {
 
   const expensesByCategory = useMemo(() => {
     const result = {};
-  
+
     // Initialize all categories to 0
     expenseTypes.forEach((type) => {
       result[type] = 0;
     });
-  
+
     // Aggregate amounts
     filteredExpenses.forEach(({ category, amount }) => {
       const key = expenseTypes.includes(category) ? category : "Other";
       result[key] += Number(amount || 0);
     });
-  
+
     return Object.entries(result).map(([name, value]) => ({
       name,
       value,
@@ -211,7 +219,7 @@ const HomeDashboard = () => {
             bgcolor: "#42c5f5",
           },
         ].map((kpi, i) => (
-          <Grid item xs={12} md={3} key={i}>
+          <Grid item xs={12} sm={6} md={3} key={i} style={ isMobile ? {width: "100%"} : { width: "215px" }}>
             <Paper
               sx={{
                 p: 2,
@@ -223,10 +231,29 @@ const HomeDashboard = () => {
             >
               {kpi.icon}
               <Box>
-                <Typography variant="subtitle1" color="textSecondary">
+                <Typography
+                  variant="subtitle1"
+                  color="textSecondary"
+                  sx={{
+                    overflow: "hidden",
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                    maxWidth: 240,
+                  }}
+                >
                   {kpi.title}
                 </Typography>
-                <Typography variant="h5">{kpi.value}</Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    overflow: "hidden",
+                    whiteSpace: "nowrap",
+                    textOverflow: "ellipsis",
+                    maxWidth: 120,
+                  }}
+                >
+                  {kpi.value}
+                </Typography>
               </Box>
             </Paper>
           </Grid>
