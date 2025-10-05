@@ -3,7 +3,8 @@
     "version": "1.0.0",
     "scripts": {
       "build": "cd client && npm i && npm run build",
-      "start": "cd server && npm i && node server.js"
+      "start": "cd server && npm i && node server.js",
+      "start:all": "npm run build && npm run start"
     },
     "engines": {
       "node": "20.x"
