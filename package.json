@@ -7,7 +7,7 @@
       "start:all": "npm run build && npm run start"
     },
     "engines": {
-      "node": "20.x"
+      "node": "14.x"
     }
   }
   
