@@ -15,6 +15,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createBooking, updateBooking } from "../services/api";
 import { useBooking } from "../context/BookingContext";
+import { useNavigate } from "react-router-dom";
 
 const serviceOptions = [
   "hallRent",
@@ -51,6 +52,7 @@ const eventTypes = [
 ];
 
 const BookingForm = () => {
+  const navigate = useNavigate();
   const { editBooking, isEdit } = useBooking();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -229,7 +231,7 @@ if (form.gstIncluded) {
       toast.success(successMessage);
 
       setTimeout(() => {
-        window.location.href = "/booking-list"; // update route if different
+        navigate("/booking-list"); // update route if different
       }, 1000);
 
       setForm({

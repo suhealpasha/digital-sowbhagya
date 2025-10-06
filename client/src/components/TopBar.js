@@ -63,7 +63,7 @@ const TopBar = () => {
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userInfo");
-    window.location.href = "/login";
+    navigate("/login");
   };
 
   return (

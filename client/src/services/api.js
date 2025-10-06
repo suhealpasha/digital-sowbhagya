@@ -3,7 +3,7 @@ import axios from "axios";
 
 const BASE_URL = process.env.NODE_ENV === "production"
 ? "https://scientific-melinde-digial-sowbhagya-8d7b55b6.koyeb.app/" // Relative path — works when frontend and backend are on same domain
-: "http://localhost:5000"; 
+: "http://localhost:8000"; 
 
 // Get token from localStorage
 const getAuthToken = () => localStorage.getItem('authToken');
