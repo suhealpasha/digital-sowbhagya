@@ -1,4 +1,4 @@
-require('dotenv').config(); // At the top
+require('dotenv').config(); // Load environment variables
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -26,23 +26,28 @@ app.use("/api/expenses", expenseRouter);
 app.use('/api', calendarRouter);
 app.use("/api", dropboxRouter);
 
-// Use environment variable for MongoDB
+// Health check route (required for Koyeb and good practice in general)
+app.get('/', (req, res) => {
+  res.send('Server is healthy!');
+});
+
+// Connect to MongoDB Atlas
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => {
-  console.log('MongoDB Atlas connected!');
+  console.log('✅ MongoDB Atlas connected!');
 }).catch(err => {
-  console.error('Connection error:', err);
+  console.error('❌ MongoDB connection error:', err);
 });
 
-// Serve React build in production
+// Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {
   const buildPath = path.join(__dirname, '../client/build');
   app.use(express.static(buildPath));
 
-  // Catch-all handler AFTER static middleware
-  app.get('/', (req, res) => {
+  // Serve index.html for all unmatched routes (after API routes)
+  app.get('*', (req, res) => {
     res.sendFile(path.join(buildPath, 'index.html'), function (err) {
       if (err) {
         console.error('Error sending index.html:', err);
@@ -53,5 +58,5 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
